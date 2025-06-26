@@ -1,0 +1,6 @@
+services:
+  rtsdk-app:
+    build: .
+    environment:
+      RUST_LOG: info
+    restart: unless-stopped
