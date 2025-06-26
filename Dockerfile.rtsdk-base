@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1.4
+FROM --platform=linux/amd64 debian:bookworm-slim AS build
+
+# Install build tools & dependencies
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    git cmake make g++ python3 libssl-dev libxml2-dev libcurl4-openssl-dev \
+    zlib1g-dev nlohmann-json3-dev ca-certificates
+
+# --------------------- Build Refinitiv Real-Time SDK ------------------------
+WORKDIR /opt
+RUN git clone --depth 1 https://github.com/Refinitiv/Real-Time-SDK.git rtsdk && \
+    cd rtsdk && \
+    cmake -B build \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DBUILD_UNIT_TESTS=OFF -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_ETA_APPLICATIONS=OFF -DBUILD_EMA_APPLICATIONS=OFF \
+    -DBUILD_ETA_EXAMPLES=OFF -DBUILD_EMA_EXAMPLES=OFF . && \
+    cmake --build build --parallel $(nproc) && \
+    cmake --install build
+
+# ---------- Final slim layer ----------
+FROM --platform=linux/amd64 debian:bookworm-slim
+COPY --from=build /usr/local /usr/local
+COPY --from=build /opt/rtsdk /opt/rtsdk
+ENV LD_LIBRARY_PATH=/usr/local/lib
