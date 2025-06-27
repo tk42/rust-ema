@@ -1,6 +1,19 @@
 services:
-  rtsdk-app:
-    build: .
+  rust-build:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+      target: rust-builder
     environment:
-      RUST_LOG: info
+      - RUST_LOG=info
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+      target: runtime
+    depends_on:
+      - rust-build
+    environment:
+      - RUST_LOG=info
     restart: unless-stopped
