@@ -20,6 +20,9 @@ RUN git clone --depth 1 https://github.com/Refinitiv/Real-Time-SDK.git rtsdk && 
 
 # ---------- Final slim layer ----------
 FROM --platform=linux/amd64 debian:bookworm-slim
-COPY --from=build /usr/local /usr/local
+# Bring in all user-space libraries, headers, and tools that were installed during build stage
+COPY --from=build /usr /usr
 COPY --from=build /opt/rtsdk /opt/rtsdk
+# CA certificates for HTTPS (needed by e.g. cargo)
+COPY --from=build /etc/ssl /etc/ssl
 ENV LD_LIBRARY_PATH=/usr/local/lib
